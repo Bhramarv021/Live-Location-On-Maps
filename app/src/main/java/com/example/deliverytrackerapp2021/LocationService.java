@@ -43,6 +43,10 @@ public class LocationService extends Service {
                 super.onLocationResult(locationResult);
                 Log.d("mylog", "Lat is : " + locationResult.getLastLocation().getLatitude() +
                         " Longitude is : " + locationResult.getLastLocation().getLongitude());
+                Intent intent = new Intent("ACT_LOC");
+                intent.putExtra("latitude",locationResult.getLastLocation().getLatitude());
+                intent.putExtra("longitude",locationResult.getLastLocation().getLongitude());
+                sendBroadcast(intent);
             }
         };
     }
