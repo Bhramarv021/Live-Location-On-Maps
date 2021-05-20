@@ -14,13 +14,27 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
-public class MainActivity extends AppCompatActivity {
+
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback{
+
+    SupportMapFragment mapFragment;
+    GoogleMap googleMap;
+    Marker marker;
+    LocationBroadcastReceiver receiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        receiver = new LocationBroadcastReceiver();
+        setContentView(R.layout.main_map_activity);
         if(Build.VERSION.SDK_INT >= 23){
             if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
                 //Request Location
@@ -35,10 +49,11 @@ public class MainActivity extends AppCompatActivity {
             //Start location request service
             startService();
         }
+        mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mapFragment.getMapAsync(MainActivity.this);
     }
 
     void startService(){
-        LocationBroadcastReceiver receiver = new LocationBroadcastReceiver();
         IntentFilter filter = new IntentFilter("ACT_LOC");
         registerReceiver(receiver, filter);
         Intent intent = new Intent(MainActivity.this, LocationService.class);
@@ -56,6 +71,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onMapReady(@NonNull GoogleMap googleMap) {
+        this.googleMap = googleMap;
+    }
+
     public class LocationBroadcastReceiver extends BroadcastReceiver {
 
         @Override
@@ -65,6 +85,18 @@ public class MainActivity extends AppCompatActivity {
                 double longitude = intent.getDoubleExtra("longitude", 0f);
                 Log.d("myMainActivityLog : ", "Lat is : "+lat +" Long is : " + longitude);
                 Toast.makeText(MainActivity.this, "Lat is : "+lat +" Long is : " + longitude, Toast.LENGTH_SHORT).show();
+                if(googleMap != null){
+                    LatLng latLng = new LatLng(lat, longitude);
+                    if(marker!=null){
+                        marker.setPosition(latLng);
+                    }
+                    else{
+                        MarkerOptions markerOptions = new MarkerOptions();
+                        markerOptions.position(latLng);
+                        marker = googleMap.addMarker(markerOptions);
+                    }
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14));
+                }
             }
         }
     }
